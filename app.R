@@ -16,19 +16,17 @@ library(leaflet)
 
 # We actually want to load multiple TSAs
 # AOI's
-#Hab_lay_options <- c("---","Lakes TSA","Kispiox TSA", "Bulkley TSA", "Morice TSA")
-Hab_lay_options <- c("---","Kispiox TSA", "Bulkley TSA")
+Hab_lay_options <- c("---","Lakes TSA","Kispiox TSA", "Bulkley TSA", "Morice TSA")
+#Hab_lay_options <- c("---","Kispiox TSA", "Bulkley TSA")
 #Hab_lay_options <- c("Lakes TSA")
 
-Hab_lay <- list(
-  #Lakes <- readRDS("SkWERM_Lakes TSA_forSelection.rds"),
-  Kispiox <- readRDS("data/SkWerm_Kispiox TSA_forSelection.rds"),
-  Bulkley <- readRDS("data/SkWerm_Bulkley TSA_forSelection.rds")#,
-  #Morice <- readRDS("SkWERM_Morice TSA_forSelection.rds")
-)
+Hab_lay <- list(Lakes = readRDS("data/lakes tsa_for_selection.rds"),
+                Kispiox = readRDS("data/kispiox tsa_for_selection.rds"),
+                Bulkley = readRDS("data/bulkley tsa_for_selection.rds"),
+                Morice = readRDS("data/morice tsa_for_selection.rds"))
 # Define names for the list elements
-#names(Hab_lay) <- Hab_lay_options[2:5]
-names(Hab_lay) <- Hab_lay_options[2:3]
+names(Hab_lay) <- Hab_lay_options[2:5]
+#names(Hab_lay) <- Hab_lay_options[2:3]
 
 #-- Prep data -------------------------------------------------------------------------------------
 #polygon type
@@ -42,7 +40,7 @@ BEU_BEC_ofInt <- c("SL_SBSdk", "WL_SBSdk", "WR_SBSdk", "SF_SBSmc2", "SL_SBSmc2",
                    "RR_ICHmc1","RR_ICHmc2", "SF_ICHmc1","WL_ICHmc1", "WL_ICHmc2", #(moose & bear)
                    "SF_SBSwk3", #(moose)
                    "CW_CWHws2", "WL_CWHws2", "IS_ICHmc1", "WR_ICHmc2","EF_ESSFmc", #(bear)
-                   "EF_ESSFmc", "ER_ESSFmc", "EF_ESSFmv1", "EF_ESSFmv3", "EW_ESSFmk", #(bear)
+                   "ER_ESSFmc", "EF_ESSFmv1", "EF_ESSFmv3", "EW_ESSFmk", #(bear)
                    "EW_ESSFwv")
 
 # harvests
@@ -79,9 +77,14 @@ ui <- fluidPage(
   div(
     style = "background-color: #000000; color: #ffffff; padding: 10px; font-size: 36px;
     font-family: 'DM Serif Display', serif;",
-    "Site Selection Tool: Validating SkWERM
+    "Site Selection Tool: SkWERM
     (Skeena Wildlife Ecological Resource Model)"
   ),
+  #tags$style(HTML("
+   #     .checkbox-group {
+    #    justify-content: space-around; /* Distributes space evenly around items */
+     #               align-items: center;
+      #            }")),
   #titlePanel("SkWERMevaluate Shiny App"),
   br(),
   p("Select from the various options to refine what kind and how many random samples
@@ -137,14 +140,16 @@ ui <- fluidPage(
   # Show a map of the area
   mainPanel(
     fluidRow(
-      h2("1. Select Area of Interest"),
+      h2("1. Select Area of Interest (required)"),
       br(),
+      p("select either a TSA, or a First Nations territorial boundary, or both (a TSA AND
+        a First Nations territorial boundary)"),
       column(width = 6,
              selectInput("hablay",
                   label = h4("Select Timber Supply Area"),
                   choices = Hab_lay_options)
       ),
-      p("OR"),
+      p("AND/OR"),
       column(width = 6,
              # select FN boundaries instead of TSA
              selectInput("FNbound",
@@ -163,7 +168,7 @@ ui <- fluidPage(
       )
     ),
     br(),
-    h2("2. Habitat Scores to Sample"),
+    h2("2. Habitat Scores to Sample (required)"),
     br(),
     fluidRow(
     p("Decide what values of habitat to include in sampling. Selecting a value of 1 for either
@@ -195,7 +200,53 @@ ui <- fluidPage(
       )
     ),
     br(),
-    h2("3. Optional Selection Features"),
+    h2("3. BEU and BEC zone combinations (required)"),
+    p("Select which Broad Ecosystem Unit (BEU) and BEC zone combinations are of interest for
+      sampling. You can select (or deselect) any of those with checkmarks, or type new combinations in the
+      textbox. *These must be valid BEU/BEC combinations*. If at anytime, you want to reset to just those
+      that are selected with a checkbox, click the Reset BEU/BEC button."),
+    # update the BEU-BEC combinations of interest
+    fluidRow(
+      column(width = 12,
+             checkboxGroupInput("checkBEU", label = h4("Select BEU/BEC types (typical)"),
+                                choices = setNames(BEU_BEC_ofInt,
+                                                   BEU_BEC_ofInt),
+                                selected = BEU_BEC_ofInt,
+                                inline = TRUE))
+    ),
+    fluidRow(
+      column(width = 6,
+             textInput("BEU_BEC_text", label = h4("Add additional BEU/BEC combos of interest"),
+                       value = ""),
+             helpText("These must be valid BEU/BEC codes") #to do - provide a list of valid codes somewhere
+      ),
+      br(),
+      br(),
+
+    ),
+    br(),
+    fluidRow(
+      #column(width = 6,
+      #      actionButton("btnShowBEU", "Show Current BEU/BECs"),
+      #     verbatimTextOutput("BEUvec")
+      #),
+      column(width = 12,
+             actionButton("btnRevealBEU", "Add BEU/BECs"),
+             verbatimTextOutput("BEUvec")
+      ),
+    ),
+    fluidRow(
+      column(12,verbatimTextOutput("value"))
+    ),
+    fluidRow(
+      helpText("Reset the BEU/BEC options to the original (all selected)"),
+      column(width = 6,
+             actionButton("btnResetBEU", "Reset BEU/BEC")
+      )
+    ),
+
+    br(),
+    h2("4. Optional Selection Features"),
     br(),
     fluidRow(
       p("Set the maximum distance potential sampling polygons can be
@@ -259,27 +310,10 @@ ui <- fluidPage(
     ),
 
 
-    h2("4. BEU and BEC zone combinations"),
-    p("Select which Broad Ecosystem Unit (BEU) and BEC zone combinations are of interest for
-      sampling)"),
-     # update the BEU-BEC combinations of interest
-     br(),
-    fluidRow(
-      column(width = 6,
-             textInput("BEU_BEC_text", label = h4("Add additional BEU/BEC combos of interest"),
-                       value = ""),
-             helpText("These must be valid BEU/BEC codes"),
-     #column(width = 12,
-      #      textInput("BEU_BEC_text", label = h4("Add additional BEU/BEC combos of interest"),
-       #               value = ""),
-        #    helpText("These must be valid BEU/BEC codes")
-     #),
-    br(),
-     actionButton("btnRevealBEU", "Current BEU_BEC"),
-     verbatimTextOutput("BEUvec"),
-          ),
-    br(),
 
+    br(),
+    br(),
+    fluidRow(
       # simple or complex polygons?
      column(width = 6,
             checkboxGroupInput("simp_polys", label = "Include complex polygons?",
@@ -330,6 +364,12 @@ server <- function(input, output, session) {
 
   thematic::thematic_shiny()
 
+  output$map <- renderLeaflet({
+    leaflet() %>%
+      addProviderTiles(providers$Esri.NatGeoWorldMap) %>%
+      setView(lng = -127.1743, lat = 54.7804, zoom = 6)
+  })
+
   # Reactive to load user-selected AOI spatial data
   selected_hablay <- reactive({
 
@@ -339,9 +379,9 @@ server <- function(input, output, session) {
       hablay <- Hab_lay[[input$hablay]]
 
       # Reproject if necessary
-      #if(st_crs(hablay)$proj4string != "+proj=longlat") {
-       # hablay <- st_transform(hablay, crs = "+proj=longlat")
-      #}
+      if(st_crs(hablay)$proj4string != "+proj=longlat") {
+        hablay <- st_transform(hablay, crs = "+proj=longlat")
+      }
 
       return(hablay)
 
@@ -356,9 +396,29 @@ server <- function(input, output, session) {
       })
       # combine
       combined_hablay <- do.call(rbind, hablay)
+
+      if(st_crs(combined_hablay)$proj4string != "+proj=longlat") {
+        combined_hablay <- st_transform(combined_hablay, crs = "+proj=longlat")
+      }
+
       rownames(combined_hablay) <- NULL
 
       return(combined_hablay)
+
+    }else if(input$hablay != "---" & input$FNbound != "---"){
+      req(input$hablay)
+      req(input$FNbound)
+
+      tsa_hablay <- Hab_lay[[input$hablay]]
+
+      tsa_fn_hablay <- tsa_hablay %>%
+        filter(FN_bound == input$FNbound) # specify your condition here
+
+      if(st_crs(tsa_fn_hablay)$proj4string != "+proj=longlat") {
+        tsa_fn_hablay <- st_transform(tsa_fn_hablay, crs = "+proj=longlat")
+      }
+
+      return(tsa_fn_hablay)
 
     }else{
       #showNotification("You must select one TSA boundary or one First Nations boundary",
@@ -401,6 +461,14 @@ server <- function(input, output, session) {
         boundary_data <- sf::st_read(file.path(tempdirname, shpdf$name[1]))
       }
 
+      #not sure if this will work
+      leafletProxy("map") %>%
+        #clearShapes() %>%
+        addPolygons(data = boundary_data,
+                    color = "black",
+                    weight = 2,
+                    fillOpacity = 1,
+                    smoothFactor = 0.5)
       return(boundary_data)
     }
     return(NULL)
@@ -426,7 +494,7 @@ server <- function(input, output, session) {
       return()  # Exit the observeEvent early
     }
 
-    tryCatch({
+    #tryCatch({
 
       #showNotification("Please wait while these selections are processing",
        #                type = "message")
@@ -443,9 +511,18 @@ server <- function(input, output, session) {
       filtered <- subset(filtered, Road_dist <= input$RoadDist)
 
       # BEU_BEC of interest
-      #BEU_BEC_ofInt_up <- c(BEU_BEC_ofInt, input$BEU_BEC_text)
-      #filtered <- subset(filtered, BEU_BEC %in% BEU_BEC_ofInt_up)
-      filtered <- subset(filtered, BEU_BEC %in% BEUvec_store$data)
+#browser()
+      if(is.null(BEUvec_store$data)){
+        showNotification("Please add BEU/BEC combinations of interest. At a minimum,
+                         push the Add BEU/BECs button and all checked types will be added",
+                         type = "error")
+        return()
+
+      }else{
+        filtered <- subset(filtered, BEU_BEC %in% BEUvec_store$data)
+      }
+
+
       #simple or complex polygons
       if("No" %in% input$simp_polys){
         filtered <- subset(filtered, SDEC == 10)
@@ -489,10 +566,13 @@ server <- function(input, output, session) {
         filtered <- subset(filtered, malan_hab_min <= input$min_moose)
       }
 
+
+
       if(input$min_polys == 0){
         if(input$num_samps == 0){
-          showNotification("Please select more than 1 sample for each ecotype (#4)",
-                           type = "warning")
+          showNotification("Please select more than 1 sample for each ecotype (#5B)",
+                           type = "error")
+          return()
         }else{
           # Sample the ecotypes:
         filtered <-  filtered %>%
@@ -505,8 +585,9 @@ server <- function(input, output, session) {
 
       }else{
         if(input$num_samps == 0){
-          showNotification("Please select more than 1 sample for each ecotype (#4)",
-                           type = "warning")
+          showNotification("Please select at least 1 sample for each ecotype (5B)",
+                           type = "error")
+          return()
         }else{
         #showNotification("testing if/else behaviour",
          #                type = "message")
@@ -526,6 +607,7 @@ server <- function(input, output, session) {
 
         showNotification("No polygons are available for these selections",
                          type = "error")
+        return()
       }else{
 
 
@@ -538,12 +620,17 @@ server <- function(input, output, session) {
                                                                     targets = c(1,2 ,4, 19,24)))))
         })
 
+        #browser()
         leafletProxy("map") %>%
           clearShapes() %>%
           addPolygons(data = filtered,
-                      highlightOptions = highlightOptions(weight = 5,
-                                                            color = "#666",
-                                                            bringToFront = TRUE))
+                      color = "blue",
+                      weight = 2,
+                      fillOpacity = 0.5,
+                      smoothFactor = 0.5)
+                      #highlightOptions = highlightOptions(weight = 5,
+                       #                                     color = "#227",
+                        #                                    bringToFront = TRUE))
 
 
           summary_samples <- as_tibble(filtered) %>%
@@ -563,31 +650,64 @@ server <- function(input, output, session) {
         return(filtered)
 
       }
-    },error = function(e){
-      showNotification("Error processing data:" + e$message, type = "error")
-    })
+   # },error = function(e){
+    #  showNotification("Error processing data:" + e$message, type = "error")
+   # })
 
   })
 
   BEUvec_store <- reactiveValues(data = NULL)
-
+  current_BB <- c()
   observeEvent(input$btnRevealBEU,{
     #browser()
-    if (is.null(BEUvec_store$data)) {
-      BEUvec_store$data <- BEU_BEC_ofInt
-    }else{
+    current_BB <- c(BEUvec_store$data,current_BB)
 
-      if(nzchar(input$BEU_BEC_text)) {
+    if(!is.null(input$checkBEU) & input$BEU_BEC_text != ""){
 
-    BEUvec_store$data <- c(BEUvec_store$data, input$BEU_BEC_text)
-      }
-    }
+      #BEUvec_store$data <- c(input$checkBEU, input$BEU_BEC_text)
+      BEUvec_store$data <- unique(c(input$checkBEU, current_BB, input$BEU_BEC_text))
 
-    output$BEUvec <- renderPrint({
-      BEUvec_store$data
-    })
+      }else if(!is.null(input$checkBEU) & input$BEU_BEC_text == ""){
+
+        #BEUvec_store$data <- input$checkBEU
+        BEUvec_store$data <- unique(input$checkBEU)
+
+        }else if(is.null(input$checkBEU) & input$BEU_BEC_text != ""){
+
+          #BEUvec_store$data <- input$BEU_BEC_text
+          BEUvec_store$data <- unique(c(current_BB, input$BEU_BEC_text))
+
+       }else{
+         showNotification("Please select at least one valid BEU BEC combination",
+                          type = "error")
+        }
+    #}#else{
+
+      #if(nzchar(input$BEU_BEC_text)) {
+
+    #BEUvec_store$data <- c(BEUvec_store$data, input$BEU_BEC_text)
+     # }
+    #}
+
+    #output$BEUvec <- renderPrint({
+     # BEUvec_store$data
+    #})
 
   })
+
+  #observeEvent(input$btnShowBEU, {
+    output$BEUvec <- renderPrint({
+      BEUvec_store$data
+  })
+  #})
+
+
+  observeEvent(input$btnResetBEU,{
+
+      BEUvec_store$data <- input$checkBEU
+
+  })
+
 
   # Filtered data table - changed to summary table
   #summary_samples <- reactive({
@@ -606,25 +726,31 @@ server <- function(input, output, session) {
   #})
 
   # Display map
-  output$map <- renderLeaflet({
+  #output$map <- renderLeaflet({
 
     # Map
-    leaflet() %>%
-      addProviderTiles(providers$Esri.NatGeoWorldMap) %>%
-      setView(lng = -127.1743, lat = 54.7804, zoom = 6)
+   # leaflet() %>%
+    #  addProviderTiles(providers$Esri.NatGeoWorldMap) %>%
+     # setView(lng = -127.1743, lat = 54.7804, zoom = 6)
 
 
-  })
+    #to do - could add bounday?
+
+    #if (!is.null(boundary())) {
+     # map <- map %>% addPolygons(data = boundary(), color = "red") # Add user-uploaded boundary to map
+    #}
+
+ # })
 
 
 
-  observeEvent(input$btnApplyFilter, function() {
-      leafletProxy("map") %>%
-      clearShapes() %>%
-      addPolygons(data = filtered_data(),
-                  highlightOptions = highlightOptions(weight = 5,
-                                                      color = "#666",
-                                                      bringToFront = TRUE))
+  #observeEvent(input$btnApplyFilter, function() {
+   #   leafletProxy("map") %>%
+    #  clearShapes() %>%
+     # addPolygons(data = filtered_data(),
+      #            highlightOptions = highlightOptions(weight = 5,
+       #                                               color = "#666",
+        #                                              bringToFront = TRUE))
 
     #output$sum_tab <- renderTable({
      # summary_samples()
@@ -636,7 +762,7 @@ server <- function(input, output, session) {
     #if (!is.null(boundary())) {
      # map <- map %>% addPolygons(data = boundary(), color = "red") # Add user-uploaded boundary to map
     #}
-  })
+  #})
 
 
   # Download data
