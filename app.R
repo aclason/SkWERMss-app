@@ -16,18 +16,29 @@ library(leaflet)
 
 # We actually want to load multiple TSAs
 # AOI's
-Hab_lay_options <- c("---","Lakes TSA","Kispiox TSA", "Bulkley TSA", "Morice TSA")
+Hab_lay_options <- c("---","Lakes TSA","Kispiox TSA", "Bulkley TSA", "Morice TSA","Nass TSA")
 #Hab_lay_options <- c("---","Kispiox TSA", "Bulkley TSA")
 #Hab_lay_options <- c("Lakes TSA")
 
-Hab_lay <- list(Lakes = readRDS("data/lakes tsa_for_selection.rds"),
-                Kispiox = readRDS("data/kispiox tsa_for_selection.rds"),
-                Bulkley = readRDS("data/bulkley tsa_for_selection.rds"),
-                Morice = readRDS("data/morice tsa_for_selection.rds"))
+#Hab_lay <- list(Lakes = readRDS("data/lakes tsa_for_selection.rds"),
+ #               Kispiox = readRDS("data/kispiox tsa_for_selection.rds"),
+  #              Bulkley = readRDS("data/bulkley tsa_for_selection.rds"),
+   #             Morice = readRDS("data/morice tsa_for_selection.rds"),
+    #            Nass = readRDS("data/nass tsa_for_selection.rds"))
+
+Hab_lay <- list(Lakes = readRDS("data/Lakes TSA_forSelection.rds"),
+                Kispiox = readRDS("data/Kispiox TSA_forSelection.rds"),
+                Bulkley = readRDS("data/Bulkley TSA_forSelection.rds"),
+                Morice = readRDS("data/Morice TSA_forSelection.rds"),
+                Nass = readRDS("data/Nass TSA_forSelection.rds"))
 # Define names for the list elements
-names(Hab_lay) <- Hab_lay_options[2:5]
+names(Hab_lay) <- Hab_lay_options[2:6]
 #names(Hab_lay) <- Hab_lay_options[2:3]
 
+
+BEU_types <- lapply(Hab_lay, function(tsa_lay) {
+       unique(tsa_lay$BEU_BEC)})
+#write.csv(unique(do.call(c,BEU_types)), "BEU_BEC_types.csv")
 #-- Prep data -------------------------------------------------------------------------------------
 #polygon type
 #sec_beu <- 0 #only simple polygons
@@ -35,13 +46,39 @@ names(Hab_lay) <- Hab_lay_options[2:5]
 #numSamples <- 75
 
 #BEU-BEC of interest in 2023
-BEU_BEC_ofInt <- c("SL_SBSdk", "WL_SBSdk", "WR_SBSdk", "SF_SBSmc2", "SL_SBSmc2", #(moose & bear)
-                   "WL_SBSmc2", "WR_SBSmc2","FR_CWHws2","CS_ICHmc1", "CS_ICHmc2", #(moose & bear)
-                   "RR_ICHmc1","RR_ICHmc2", "SF_ICHmc1","WL_ICHmc1", "WL_ICHmc2", #(moose & bear)
-                   "SF_SBSwk3", #(moose)
-                   "CW_CWHws2", "WL_CWHws2", "IS_ICHmc1", "WR_ICHmc2","EF_ESSFmc", #(bear)
-                   "ER_ESSFmc", "EF_ESSFmv1", "EF_ESSFmv3", "EW_ESSFmk", #(bear)
-                   "EW_ESSFwv")
+BEU_BEC_ofInt <- c("SL_SBSdk", "WL_SBSdk", "WR_SBSdk",
+                   "SF_SBSmc2", "SL_SBSmc2", "WL_SBSmc2", "WR_SBSmc2",
+                   "SF_SBSwk3",
+                   "FR_CWHws2",
+                   "CS_ICHmc1", "RR_ICHmc1", "SF_ICHmc1","WL_ICHmc1","IS_ICHmc1",
+                   "CS_ICHmc2", "WL_ICHmc2", "WR_ICHmc2", "RR_ICHmc2",
+                   "CW_CWHws2", "SR_CWHwm","WL_CWHws2",
+                   "EF_ESSFmc", "ER_ESSFmc",
+                   "EF_ESSFmv1", "EF_ESSFmv3", "EW_ESSFmk", "EW_ESSFwv")
+
+ecotypes_ofInt <- c("SL_SBSdk_B_7_VL-L_Populus",
+                    "SL_SBSdk_M_7_VL-L_Populus",
+                    "SL_SBSdk_M_7_M_Populus",
+                    "WL_SBSdk_NA_3a_NA_Populus",
+                    "WL_SBSdk_NA_3a_NA_Spruce",
+                    "WR_SBSmc2_B_7_M_Populus",
+                    "WR_SBSmc2_M_7_M_Populus",
+                    'WR_SBSmc2_C_7_M_Spruce',
+                    "WR_SBSdk_B_7_M_Populus",
+                    "WR_SBSdk_M_7_M_Spruce",
+                    "WR_SBSdk_C_7_M_Spruce",
+                    "SL_SBSmc2_B_7_VL-L_Populus",
+                    "SL_SBSmc2_C_7_M_Spruce",
+                    "WL_SBSmc2_NA_3a_NA_Populus",
+                    "WL_SBSmc2_NA_3a_NA_Spruce",
+                    "SR_CWHwm_C_7_M_Hemlock",
+                    "SF_SBSmc2_M_7_VL-L_Spruce",
+                    "CS_ICHmc_C_7_M_Hemlock",
+                    "CS_ICHmc_C_7_H_Hemlock",
+                    "CS_ICHmc_NA_3b_NA_Hemlock",
+                    "CS_ICHmc_NA_3a_NA_Hemlock",
+                    "WL_ICHmc_NA_3a_NA_NA",
+                    "WL_ICHmc_NA_3a_Fir_NA")
 
 # harvests
 # Extract all HARVEST_YEAR values from all spatial objects and combine into a single vector
@@ -77,8 +114,7 @@ ui <- fluidPage(
   div(
     style = "background-color: #000000; color: #ffffff; padding: 10px; font-size: 36px;
     font-family: 'DM Serif Display', serif;",
-    "Site Selection Tool: SkWERM
-    (Skeena Wildlife Ecological Resource Model)"
+    "SkWERM (Skeena Wildlife Ecological Resource Model) Site Selection Tool"
   ),
   #tags$style(HTML("
    #     .checkbox-group {
@@ -87,18 +123,17 @@ ui <- fluidPage(
       #            }")),
   #titlePanel("SkWERMevaluate Shiny App"),
   br(),
-  p("Select from the various options to refine what kind and how many random samples
-  to take from all the different forest polygons within a given area of interest that
-    represents different Grizzly bear and moose habitat values"),
+  p("Make selections and choose sampling intensity within a area of interest to work with
+    the Grizzly bear and moose habitat models"),
   helpText("Please provide feedback on what worked and what didn't in using this app
-  to:"),
+  to: alana dot clason at bvcentre.ca"),
   br(),
   br(),
   # Options for filtering available polygons to select for sampling
   sidebarLayout(
     position = "right",
     sidebarPanel(
-      h2("5. How Many Polygons"),
+      h2("6. How Many Polygons"),
       # minimum required number of polygons?
       p("After all the selections are done (left), (A) choose how many potential polygons
         an ecotype should have in order to randomly select polygons. And then (B) choose
@@ -134,7 +169,10 @@ ui <- fluidPage(
 
       # Download user filtered data
       downloadButton("downloadCSV", "Download filtered CSV"),
-      downloadButton("downloadGPKG", "Download filtered GeoPackage")
+      br(),
+      downloadButton("downloadGPKG", "Download filtered GeoPackage"),
+      br(),
+      downloadButton("downloadKML", "Download filtered kml")
 
     ),
   # Show a map of the area
@@ -164,7 +202,7 @@ ui <- fluidPage(
                 accept = c(".shp",".dbf",".sbn","sbx",".shx",".prj",
                            ".gpkg", ".kml"), multiple = TRUE),
       helpText("Upload spatial data. If uploading a shapefile, make sure to upload at least the
-               .shp, .sbf, and .shx in order for it to work. .gpkg and .kml are also accepted.")
+               .shp, .dbf, and .shx in order for it to work. .gpkg and .kml are also accepted.")
       )
     ),
     br(),
@@ -176,10 +214,16 @@ ui <- fluidPage(
      Selecting a value of 5 would mean you would sample across the whole range from worst (5)
        to best (1) habitats"),
       column(width = 6,
+             checkboxGroupInput("BearChoice",
+                                label = h4("Do you want to sample Grizzly bear habitat?"),
+                                choices = c("Yes"),
+                                selected = c("Yes")),
+             conditionalPanel(
+             condition = "input.BearChoice.includes('Yes')",
              numericInput("min_bear", label = h4("Grizzly bear habitat scores"),
                           value = 1,
                           min = 1,
-                          max = 5),
+                          max = 6),
 
              checkboxGroupInput("InclHibernation",
                                 label = "Include hibernation in best habitat score?",
@@ -190,21 +234,31 @@ ui <- fluidPage(
              conditionalPanel(
                condition = "input.InclHibernation.includes('Include hibernation')"
              )
+             )
       ),
       br(),
       column(width = 6,
+             checkboxGroupInput("MooseChoice",
+                                label = h4("Do you want to sample Moose habitat?"),
+                                choices = c("Yes"),
+                                selected = c("Yes")),
+             conditionalPanel(
+             condition = "input.MooseChoice.includes('Yes')",
              numericInput("min_moose", label = h4("Moose habitat scores"),
                           value = 1,
                           min = 1,
-                          max = 5),
+                          max = 6),
+             ),
       )
     ),
     br(),
-    h2("3. BEU and BEC zone combinations (required)"),
-    p("Select which Broad Ecosystem Unit (BEU) and BEC zone combinations are of interest for
-      sampling. You can select (or deselect) any of those with checkmarks, or type new combinations in the
-      textbox. *These must be valid BEU/BEC combinations*. If at anytime, you want to reset to just those
-      that are selected with a checkbox, click the Reset BEU/BEC button."),
+    h2("3. BEU and BEC zone combinations OR Ecotypes (required)"),
+    p("Select which Broad Ecosystem Unit (BEU) and BEC zone combinations OR specific ecotypes
+    are of interest for sampling.
+    You can select (or deselect) any of those with checkmarks, or type new combinations in the
+    textbox. *These must be valid BEU/BEC combinations or Ecotypes*.
+    If at anytime, you want to reset to just those
+    that are selected with a checkbox, click the Reset BEU/BEC button."),
     # update the BEU-BEC combinations of interest
     fluidRow(
       column(width = 12,
@@ -218,7 +272,7 @@ ui <- fluidPage(
       column(width = 6,
              textInput("BEU_BEC_text", label = h4("Add additional BEU/BEC combos of interest"),
                        value = ""),
-             helpText("These must be valid BEU/BEC codes") #to do - provide a list of valid codes somewhere
+             helpText("These must be valid BEU/BEC codes")
       ),
       br(),
       br(),
@@ -235,33 +289,96 @@ ui <- fluidPage(
              verbatimTextOutput("BEUvec")
       ),
     ),
-    fluidRow(
-      column(12,verbatimTextOutput("value"))
-    ),
+    #fluidRow(
+     # column(12,verbatimTextOutput("value"))
+    #),
     fluidRow(
       helpText("Reset the BEU/BEC options to the original (all selected)"),
       column(width = 6,
              actionButton("btnResetBEU", "Reset BEU/BEC")
       )
     ),
-
-    br(),
-    h2("4. Optional Selection Features"),
+    # update the Ecotypes of interest
+    fluidRow(
+      column(width = 12,
+             checkboxGroupInput("checkEcotype", label = h4("Select Ecotypes"),
+                                choices = setNames(ecotypes_ofInt,
+                                                   ecotypes_ofInt),
+                                selected = ecotypes_ofInt,
+                                inline = TRUE))
+    ),
+    fluidRow(
+      column(width = 6,
+             textInput("Eco_text", label = h4("Add additional Ecotypes of interest"),
+                       value = ""),
+             helpText("These must be valid Ecotypes") #to do - provide a list of valid codes somewhere
+      ),
+      br(),
+      br(),
+    ),
     br(),
     fluidRow(
-      p("Set the maximum distance potential sampling polygons can be
-                      from any road."),
       column(width = 12,
-             sliderInput("RoadDist",
-                         label = h4("Distance to road (km)"),
-                         min = rd_dist_min,
-                         max = rd_dist_max, # make sure this is the maximum for all of the Hab_lay options
-                         value = 1)
+             actionButton("btnRevealECO", "Add Ecotypes"),
+             verbatimTextOutput("ECOvec")
+      ),
+    ),
+  #  fluidRow(
+ #     column(12,verbatimTextOutput("value"))
+  #  ),
+    fluidRow(
+     helpText("Reset the Ecotype options to the original (all selected)"),
+      column(width = 6,
+             actionButton("btnResetECO", "Reset Ecotypes")
+      )
+    ),
+    br(),
+    h2("4. Distance from roads"),
+    fluidRow(
+      p("Set the maximum distance sampling polygons can be from any road."),
+      helpText("this represents the distance from the edge of a polyon to the nearest road"),
+      #column(width = 12,
+      #      sliderInput("RoadDist",
+      #                 label = h4("Distance to road (km)"),
+      #                min = rd_dist_min,
+      #               max = rd_dist_max, # make sure this is the maximum for all of the Hab_lay options
+      #              value = 1)
+      # )
+      column(width = 12,
+             radioButtons("dynamicSlider", "Choose a category of distance:",
+                          choices = c("< 1 km", "1km or farther"),
+                          selected = "< 1 km"),
+             #textOutput("selectedDistance")
+             conditionalPanel(
+               condition = "input.dynamicSlider == '< 1 km'",
+               sliderInput("RoadDist",
+                           label = "Maximum distance:",
+                           min = 0,
+                           max = 1,
+                           value = 0.4,
+                           step = 0.1)
+             ),
+             conditionalPanel(
+               condition = "input.dynamicSlider == '1km or farther'",
+               sliderInput("RoadDist",
+                           label = "Maximum distance:",
+                           min = 1,
+                           max = rd_dist_max,
+                           value = 5,
+                           step = 1)
              )
+      )
     ),
     br(),
     br(),
+    h2("5. Optional Selection Features"),
     p("Decide whether sampled polygons can have a history of fire or harvest:"),
+    helpText("Sampling can happen in forests with harvest and fire disturbance. You can
+             choose to sample sites from 'undisturbed' forests only (no fire, no harvest) by leaving
+             the defaults (No to both). You can also select any combination of fire and harvest
+             history. If you select both Yes *AND* No for either disturbance type, that means you
+             would like to include forests with AND without a harvest history,
+             and the same is true for fire"),
     fluidRow(
       column(width = 6,
              checkboxGroupInput("HarvestChoice",
@@ -287,7 +404,7 @@ ui <- fluidPage(
       br(),
       column(width = 6,
              checkboxGroupInput("FireChoice",
-                                label = h4("Include polygons that fall within historic fire
+                                label = h4("Include polygons within historic fire
                                            boundaries?"),
                                 choices = c("Yes","No"),
                                 selected = c("No")),
@@ -308,28 +425,32 @@ ui <- fluidPage(
              )
       )
     ),
-
-
-
-    br(),
     br(),
     fluidRow(
       # simple or complex polygons?
      column(width = 6,
-            checkboxGroupInput("simp_polys", label = "Include complex polygons?",
+            checkboxGroupInput("simp_polys", label = h4("Include complex polygons?"),
                                choices = c("No"),
                                selected = c("No")),
             helpText("The Broad Ecosystem Units can sometimes have multiple different
                      types associated with a single polygon. You can choose to sample only
                      simple polygons, which means only the polygons that have a single
                      BEU type (default), or you can include all polygons, no matter how
-                     subdivided (unclick yes)"),
+                     subdivided (Select No)"),
             br(),
-     )
+     ),
+      # simple or complex polygons?
+      column(width = 6,
+             checkboxGroupInput("prev_samp", label = h4("Exclude previously sampled polygons?"),
+                                choices = c("Yes"),
+                                selected = c("Yes")),
+             helpText("You can either exclude (default), or include polygons (unclick Yes)
+                      that were previously sampled"),
+             br(),
+      )
     ),
     br(),
     br(),
-
     h2("Results of Sample Selection"),
     br(),
     h4("Number samples selected by ecotype"),
@@ -510,23 +631,43 @@ server <- function(input, output, session) {
       #browser()
       filtered <- subset(filtered, Road_dist <= input$RoadDist)
 
-      # BEU_BEC of interest
-#browser()
+      # BEU_BEC of interest OR Ecotypes of interest
+      #browser()
       if(is.null(BEUvec_store$data)){
-        showNotification("Please add BEU/BEC combinations of interest. At a minimum,
-                         push the Add BEU/BECs button and all checked types will be added",
-                         type = "error")
-        return()
+        if(is.null(ECOvec_store$data)){
+          showNotification("Please add either BEU/BEC combinations OR ecotypes of interest.
+          At a minimum, push the Add BEU/BECs or Add Ecotypes button and those checked types
+                           will be added",
+                           type = "error")
+          return()
+        }else{
+          #ecotype not null, but beu-bec types are - use ecotypes
+          filtered <- subset(filtered, ECO_TYPE %in% ECOvec_store$data)
+        }
 
       }else{
-        filtered <- subset(filtered, BEU_BEC %in% BEUvec_store$data)
+        if(is.null(ECOvec_store$data)){
+          filtered <- subset(filtered, BEU_BEC %in% BEUvec_store$data)
+        }else{
+          #if both are selected, use both
+          filtered <- subset(filtered, BEU_BEC %in% BEUvec_store$data)
+          filtered <- subset(filtered, ECO_TYPE %in% ECOvec_store$data)
+        }
       }
-
 
       #simple or complex polygons
       if("No" %in% input$simp_polys){
         filtered <- subset(filtered, SDEC == 10)
       } else{
+        filtered <- filtered
+      }
+
+      #previously sampled
+      if("Yes" %in% input$prev_samp){
+        #exclude previously sample polygons (only select those that have not been sampled)
+        filtered <- subset(filtered, Prev_Samp == "No")
+      } else{
+        #include all polygons regardless of whether they were sampled before or not
         filtered <- filtered
       }
 
@@ -558,34 +699,45 @@ server <- function(input, output, session) {
       }
 
       # minimum habitat score
-      if("Yes" %in% input$InclHibernation) {
-        filtered <- subset(filtered, murar_hab_min_hib <= input$min_bear)
-        filtered <- subset(filtered, malan_hab_min <= input$min_moose)
+      if("Yes" %in% input$BearChoice){
+        if("Yes" %in% input$InclHibernation) {
+          filtered <- subset(filtered, murar_hab_min_hib <= input$min_bear)
+          #filtered <- subset(filtered, malan_hab_min <= input$min_moose)
+        }else{
+          filtered <- subset(filtered, murar_hab_min <= input$min_bear)
+          #filtered <- subset(filtered, malan_hab_min <= input$min_moose)
+        }
       }else{
-        filtered <- subset(filtered, murar_hab_min <= input$min_bear)
-        filtered <- subset(filtered, malan_hab_min <= input$min_moose)
+          filtered <- filtered
       }
+
+      if("Yes" %in% input$MooseChoice){
+        filtered <- subset(filtered, malan_hab_min <= input$min_moose)
+      } else {
+        filtered <- filtered
+      }
+
 
 
 
       if(input$min_polys == 0){
         if(input$num_samps == 0){
-          showNotification("Please select more than 1 sample for each ecotype (#5B)",
+          showNotification("Please select more than 1 sample for each ecotype (6B)",
                            type = "error")
           return()
         }else{
           # Sample the ecotypes:
         filtered <-  filtered %>%
           group_by(ECO_TYPE) %>%
-          #mutate(N = n()) %>%
-          mutate(N = min(input$num_samps, n(), na.rm = TRUE)) %>%
+          mutate(N = n()) %>%
+          mutate(sample_size = min(input$num_samps, n(), na.rm = TRUE)) %>%
           group_split() %>%
-          map_df(~ slice_sample(.x, n = min(.x$N, nrow(.x), na.rm = TRUE)))
+          map_df(~ slice_sample(.x, n = min(.x$sample_size, nrow(.x), na.rm = TRUE)))
         }
 
       }else{
         if(input$num_samps == 0){
-          showNotification("Please select at least 1 sample for each ecotype (5B)",
+          showNotification("Please select at least 1 sample for each ecotype (6B)",
                            type = "error")
           return()
         }else{
@@ -681,25 +833,11 @@ server <- function(input, output, session) {
          showNotification("Please select at least one valid BEU BEC combination",
                           type = "error")
         }
-    #}#else{
-
-      #if(nzchar(input$BEU_BEC_text)) {
-
-    #BEUvec_store$data <- c(BEUvec_store$data, input$BEU_BEC_text)
-     # }
-    #}
-
-    #output$BEUvec <- renderPrint({
-     # BEUvec_store$data
-    #})
-
   })
 
-  #observeEvent(input$btnShowBEU, {
-    output$BEUvec <- renderPrint({
+  output$BEUvec <- renderPrint({
       BEUvec_store$data
   })
-  #})
 
 
   observeEvent(input$btnResetBEU,{
@@ -708,63 +846,41 @@ server <- function(input, output, session) {
 
   })
 
+  ECOvec_store <- reactiveValues(data = NULL)
+  current_eco <- c()
+  observeEvent(input$btnRevealECO,{
 
-  # Filtered data table - changed to summary table
-  #summary_samples <- reactive({
-   # filtered <- filtered_data()
+    current_eco <- c(ECOvec_store$data,current_eco)
 
-    #if(is.null(filtered)){
-     # print("no polygons are available for these selections")
-    #}
+    if(!is.null(input$checkEcotype) & input$Eco_text != ""){
 
-    #sum_tab <- filtered %>%
-     # group_by(ECO_TYPE) %>%
-      #dplyr::select(., ECO_TYPE, BEU_BEC,STAND,STRCT_mod,CROWN_ALL,DOM_TREE) %>%
-      #summarise(samples = n())
-  #  return(sum_tab)
+      ECOvec_store$data <- unique(c(input$checkEcotype, current_eco, input$Eco_text))
 
-  #})
+    }else if(!is.null(input$checkEcotype) & input$Eco_text == ""){
 
-  # Display map
-  #output$map <- renderLeaflet({
+      ECOvec_store$data <- unique(input$checkEcotype)
 
-    # Map
-   # leaflet() %>%
-    #  addProviderTiles(providers$Esri.NatGeoWorldMap) %>%
-     # setView(lng = -127.1743, lat = 54.7804, zoom = 6)
+    }else if(is.null(input$checkEcotype) & input$Eco_text != ""){
 
+      ECOvec_store$data <- unique(c(current_eco, input$Eco_text))
 
-    #to do - could add bounday?
+    }else{
+      showNotification("Please select at least one valid Ecotype if no BEU/BEC combo selected",
+                       type = "error")
+    }
 
-    #if (!is.null(boundary())) {
-     # map <- map %>% addPolygons(data = boundary(), color = "red") # Add user-uploaded boundary to map
-    #}
+  })
 
- # })
+  output$ECOvec <- renderPrint({
+    ECOvec_store$data
+  })
 
 
+  observeEvent(input$btnResetECO,{
 
-  #observeEvent(input$btnApplyFilter, function() {
-   #   leafletProxy("map") %>%
-    #  clearShapes() %>%
-     # addPolygons(data = filtered_data(),
-      #            highlightOptions = highlightOptions(weight = 5,
-       #                                               color = "#666",
-        #                                              bringToFront = TRUE))
+    ECOvec_store$data <- input$checkEcotype
 
-    #output$sum_tab <- renderTable({
-     # summary_samples()
-
-   # })
-
-
-    # Check if boundary data is not NULL
-    #if (!is.null(boundary())) {
-     # map <- map %>% addPolygons(data = boundary(), color = "red") # Add user-uploaded boundary to map
-    #}
-  #})
-
-
+  })
   # Download data
   # CSV
   output$downloadCSV <- downloadHandler(
@@ -786,6 +902,16 @@ server <- function(input, output, session) {
       sf::st_write(filtered_data$data, file, driver = "GPKG")
     }
   )
+
+  output$downloadKML <- downloadHandler(
+    filename = function() {
+      paste("filtered", ".kml", sep = "")
+    },
+    content = function(file) {
+      sf::st_write(filtered_data$data, file, driver = "KML")
+    }
+  )
+
 }
 
 
