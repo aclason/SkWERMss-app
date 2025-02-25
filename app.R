@@ -73,12 +73,24 @@ ecotypes_ofInt <- c("SL_SBSdk_B_7_VL-L_Populus",
                     "WL_SBSmc2_NA_3a_NA_Spruce",
                     "SR_CWHwm_C_7_M_Hemlock",
                     "SF_SBSmc2_M_7_VL-L_Spruce",
-                    "CS_ICHmc_C_7_M_Hemlock",
-                    "CS_ICHmc_C_7_H_Hemlock",
-                    "CS_ICHmc_NA_3b_NA_Hemlock",
-                    "CS_ICHmc_NA_3a_NA_Hemlock",
-                    "WL_ICHmc_NA_3a_NA_NA",
-                    "WL_ICHmc_NA_3a_Fir_NA")
+                    #"CS_ICHmc_C_7_M_Hemlock",
+                    #"CS_ICHmc_C_7_H_Hemlock",
+                    #"CS_ICHmc_NA_3b_NA_Hemlock",
+                    #"CS_ICHmc_NA_3a_NA_Hemlock",
+                    "CS_ICHmc1_C_7_M_Hemlock",
+                    "CS_ICHmc2_C_7_M_Hemlock",
+                    "CS_ICHmc1_C_7_H_Hemlock",
+                    "CS_ICHmc2_C_7_H_Hemlock",
+                    "CS_ICHmc1_NA_3b_NA_Hemlock",
+                    "CS_ICHmc2_NA_3b_NA_Hemlock",
+                    "CS_ICHmc1_NA_3a_NA_Hemlock",
+                    "CS_ICHmc2_NA_3a_NA_Hemlock",
+                    "WL_ICHmc1_NA_3a_NA_NA",
+                    "WL_ICHmc2_NA_3a_NA_NA",
+                    "WL_ICHmc2_NA_3a_Fir_NA",
+                    "WL_ICHmc2_NA_3a_Fir_NA")
+                    #"WL_ICHmc_NA_3a_NA_NA",
+                    #"WL_ICHmc_NA_3a_Fir_NA")
 
 # harvests
 # Extract all HARVEST_YEAR values from all spatial objects and combine into a single vector
@@ -494,17 +506,20 @@ server <- function(input, output, session) {
   # Reactive to load user-selected AOI spatial data
   selected_hablay <- reactive({
 
-    if(input$hablay != "---"){
-      req(input$hablay)  # Require selection of AOI
-      #if a TSA is selected, use that
-      hablay <- Hab_lay[[input$hablay]]
+    if(input$hablay != "---" & input$FNbound != "---"){
+      req(input$hablay)
+      req(input$FNbound)
 
-      # Reproject if necessary
-      if(st_crs(hablay)$proj4string != "+proj=longlat") {
-        hablay <- st_transform(hablay, crs = "+proj=longlat")
+      tsa_hablay <- Hab_lay[[input$hablay]]
+
+      tsa_fn_hablay <- tsa_hablay %>%
+        filter(FN_bound == input$FNbound) # specify your condition here
+
+      if(st_crs(tsa_fn_hablay)$proj4string != "+proj=longlat") {
+        tsa_fn_hablay <- st_transform(tsa_fn_hablay, crs = "+proj=longlat")
       }
 
-      return(hablay)
+      return(tsa_fn_hablay)
 
     }else if(input$FNbound != "---"){
       req(input$FNbound)
@@ -526,20 +541,17 @@ server <- function(input, output, session) {
 
       return(combined_hablay)
 
-    }else if(input$hablay != "---" & input$FNbound != "---"){
-      req(input$hablay)
-      req(input$FNbound)
+    }else if(input$hablay != "---"){
+      req(input$hablay)  # Require selection of AOI
+      #if a TSA is selected, use that
+      hablay <- Hab_lay[[input$hablay]]
 
-      tsa_hablay <- Hab_lay[[input$hablay]]
-
-      tsa_fn_hablay <- tsa_hablay %>%
-        filter(FN_bound == input$FNbound) # specify your condition here
-
-      if(st_crs(tsa_fn_hablay)$proj4string != "+proj=longlat") {
-        tsa_fn_hablay <- st_transform(tsa_fn_hablay, crs = "+proj=longlat")
+      # Reproject if necessary
+      if(st_crs(hablay)$proj4string != "+proj=longlat") {
+        hablay <- st_transform(hablay, crs = "+proj=longlat")
       }
 
-      return(tsa_fn_hablay)
+      return(hablay)
 
     }else{
       #showNotification("You must select one TSA boundary or one First Nations boundary",
